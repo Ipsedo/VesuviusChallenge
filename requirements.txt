@@ -1,0 +1,9 @@
+torch
+torchvision
+
+jupyter
+
+pre-commit
+mypy
+pylint
+pytest
