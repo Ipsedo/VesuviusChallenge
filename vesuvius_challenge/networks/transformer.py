@@ -3,7 +3,7 @@ from typing import Optional
 
 import torch as th
 from torch import nn
-from torch.nn import functional as F
+from unfoldNd import foldNd, unfoldNd
 
 
 class WindowedTransformer(nn.Module):
@@ -34,29 +34,33 @@ class WindowedTransformer(nn.Module):
 
     def __linear_path_unfold(self, t: th.Tensor) -> th.Tensor:
         b = t.size(0)
-        return (
-            F.unfold(
+        sizes = t.size()[2:]
+
+        out: th.Tensor = (
+            unfoldNd(
                 t,
                 self.__kernel_size,
                 dilation=1,
                 padding=self.__padding,
                 stride=1,
             )
-            .view(b, self.__channels, self.__kernel_size**2, -1)
+            .view(b, self.__channels, self.__kernel_size ** len(sizes), -1)
             # batch, patch, kernel, channels
             .permute(0, 3, 2, 1)
             .contiguous()
-            .view(-1, self.__kernel_size**2, self.__channels)
+            .view(-1, self.__kernel_size ** len(sizes), self.__channels)
         )
 
-    def __generate(self, input_trf: th.Tensor) -> th.Tensor:
+        return out
+
+    def __generate(self, input_trf: th.Tensor, nb_dim: int) -> th.Tensor:
         device = "cuda" if next(self.parameters()).is_cuda else "cpu"
         b, _, c = input_trf.size()
 
         # start token
         target = th.zeros((b, 1, c), device=device)
 
-        for _ in range(self.__kernel_size**2):
+        for _ in range(self.__kernel_size**nb_dim):
             out = self.__trf(input_trf, target)
             target = th.cat([target, out[:, -1, None, :]], dim=1)
 
@@ -68,15 +72,16 @@ class WindowedTransformer(nn.Module):
         input_encoded: th.Tensor,
         target_encoded: Optional[th.Tensor] = None,
     ) -> th.Tensor:
-        assert len(input_encoded.size()) == 4
+        assert len(input_encoded.size()) >= 3
 
-        b, _, w, h = input_encoded.size()
+        b = input_encoded.size(0)
+        sizes = input_encoded.size()[2:]
 
         input_trf = self.__linear_path_unfold(input_encoded)
 
         if target_encoded is not None:
             # training
-            assert len(target_encoded.size()) == 4
+            assert len(target_encoded.size()) == len(input_encoded.size())
             assert all(
                 input_encoded.size(i) == target_encoded.size(i)
                 for i in range(len(input_encoded.size()))
@@ -84,15 +89,14 @@ class WindowedTransformer(nn.Module):
 
             device = "cuda" if next(self.parameters()).is_cuda else "cpu"
 
-            target_trf = self.__linear_path_unfold(target_encoded)
-
-            # start token
             target_trf = th.cat(
                 [
+                    # start token
                     th.zeros(
-                        target_trf.size(0), 1, self.__channels, device=device
+                        input_trf.size(0), 1, self.__channels, device=device
                     ),
-                    target_trf,
+                    # reshape
+                    self.__linear_path_unfold(target_encoded),
                 ],
                 dim=1,
             )
@@ -103,18 +107,18 @@ class WindowedTransformer(nn.Module):
             out = out[:, :-1, :]
         else:
             # auto-regressive generation
-            out = self.__generate(input_trf)
+            out = self.__generate(input_trf, len(sizes))
 
         out = (
-            out.view(b, -1, self.__kernel_size**2, self.__channels)
+            out.view(b, -1, self.__kernel_size ** len(sizes), self.__channels)
             .permute(0, 3, 2, 1)
             .contiguous()
-            .view(b, self.__channels * self.__kernel_size**2, -1)
+            .view(b, self.__channels * self.__kernel_size ** len(sizes), -1)
         )
 
-        out = F.fold(
+        out = foldNd(
             out,
-            (w, h),
+            sizes,
             self.__kernel_size,
             dilation=1,
             padding=self.__padding,
