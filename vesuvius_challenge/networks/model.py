@@ -8,7 +8,7 @@ from .convolutions import ConvBlock, OutputConv
 from .transformer import WindowedTransformer
 
 
-class TransAE(nn.Module):
+class TrfAutoEncoder(nn.Module):
     def __init__(
         self,
         channels: List[Tuple[int, int]],
@@ -63,5 +63,6 @@ class TransAE(nn.Module):
 
         out: th.Tensor = self.__decoder(out_encoded)
         out = self.__output(out)
+        out = th.tanh(out.sum(dim=-1))
 
         return out

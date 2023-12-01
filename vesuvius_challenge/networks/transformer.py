@@ -111,6 +111,7 @@ class WindowedTransformer(nn.Module):
 
         out = (
             out.view(b, -1, self.__kernel_size ** len(sizes), self.__channels)
+            # batch, channels, kernel, patchs
             .permute(0, 3, 2, 1)
             .contiguous()
             .view(b, self.__channels * self.__kernel_size ** len(sizes), -1)

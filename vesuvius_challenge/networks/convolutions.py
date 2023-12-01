@@ -39,5 +39,4 @@ class OutputConv(nn.Sequential):
                 1,
                 0,
             ),
-            nn.Tanh(),
         )

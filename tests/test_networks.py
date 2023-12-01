@@ -4,7 +4,7 @@ from typing import List
 import pytest
 import torch as th
 
-from vesuvius_challenge.networks.model import TransAE
+from vesuvius_challenge.networks.model import TrfAutoEncoder
 from vesuvius_challenge.networks.transformer import WindowedTransformer
 
 
@@ -49,7 +49,7 @@ def test_windowed_transformer(
 @pytest.mark.parametrize("batch_size", [1, 2])
 @pytest.mark.parametrize("sizes", [[16, 16, 16], [8, 8, 8]])
 def test_model(batch_size: int, sizes: List[int]) -> None:
-    trans_ae = TransAE(
+    trf_ae = TrfAutoEncoder(
         [(1, 4), (4, 8)],
         4,
         8,
@@ -59,18 +59,18 @@ def test_model(batch_size: int, sizes: List[int]) -> None:
     x = th.rand(batch_size, 1, *sizes)
     tgt = th.rand(batch_size, 1, *sizes)
 
-    out = trans_ae(x, tgt)
+    out = trf_ae(x, tgt)
 
-    assert len(out.size()) == len(x.size())
+    assert len(out.size()) == 4
     assert out.size(0) == batch_size
     assert out.size(1) == 1
-    assert all(s == s_expected for s, s_expected in zip(out.size()[2:], sizes))
+    assert out.size(2) == sizes[0]
+    assert out.size(3) == sizes[1]
 
-    out_gen = trans_ae(x)
+    out_gen = trf_ae(x)
 
-    assert len(out_gen.size()) == len(x.size())
+    assert len(out_gen.size()) == 4
     assert out_gen.size(0) == batch_size
     assert out_gen.size(1) == 1
-    assert all(
-        s == s_expected for s, s_expected in zip(out_gen.size()[2:], sizes)
-    )
+    assert out_gen.size(2) == sizes[0]
+    assert out_gen.size(3) == sizes[1]
