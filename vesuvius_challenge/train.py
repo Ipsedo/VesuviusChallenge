@@ -23,6 +23,8 @@ def train(model_options: ModelOptions, train_options: TrainOptions) -> None:
 
     model = model_options.new_model()
 
+    print(f"parameters : {model.count_parameters()}")
+
     img_transform = Compose(
         [
             ToDType(th.float),

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from typing import List, Optional, Tuple
 
+import numpy as np
 import torch as th
 from torch import nn
 
@@ -75,3 +76,10 @@ class TrfAutoEncoder(nn.Module):
         out = th.sigmoid(out.sum(dim=-1))
 
         return out
+
+    def count_parameters(self) -> int:
+        return int(
+            sum(
+                np.prod(p.size()) for p in self.parameters() if p.requires_grad
+            )
+        )
