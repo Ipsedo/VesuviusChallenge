@@ -72,6 +72,6 @@ class TrfAutoEncoder(nn.Module):
 
         out: th.Tensor = self.__decoder(out_encoded)
         out = self.__output(out)
-        out = th.tanh(out.sum(dim=-1))
+        out = th.sigmoid(out.sum(dim=-1))
 
         return out

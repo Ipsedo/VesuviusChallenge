@@ -4,7 +4,7 @@ from os.path import exists, isdir, join
 from statistics import mean
 
 import torch as th
-from torch.nn.functional import mse_loss
+from torch.nn.functional import binary_cross_entropy
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
@@ -27,7 +27,7 @@ def train(model_options: ModelOptions, train_options: TrainOptions) -> None:
         [
             ToDType(th.float),
             MinMaxScale([1, 2, 3]),
-            RangeChange(-1.0, 1.0),
+            RangeChange(0.0, 1.0),
         ]
     )
 
@@ -35,7 +35,7 @@ def train(model_options: ModelOptions, train_options: TrainOptions) -> None:
         [
             ToDType(th.float),
             MinMaxScale([1, 2]),
-            RangeChange(-1.0, 1.0),
+            RangeChange(0.0, 1.0),
         ]
     )
 
@@ -58,7 +58,7 @@ def train(model_options: ModelOptions, train_options: TrainOptions) -> None:
 
     iter_idx = 0
     save_idx = 0
-    mse_metrics = [1.0] * train_options.metric_length
+    bce_metrics = [1.0] * train_options.metric_length
 
     for e in range(train_options.nb_epoch):
 
@@ -72,21 +72,21 @@ def train(model_options: ModelOptions, train_options: TrainOptions) -> None:
             tgt = y.unsqueeze(-1).repeat(1, 1, 1, 1, x.size(-1))
             out = model(x, tgt)
 
-            loss = mse_loss(out, y, reduction="mean")
+            loss = binary_cross_entropy(out, y, reduction="mean")
 
             optim.zero_grad()
             loss.backward()
             optim.step()
 
-            del mse_metrics[0]
-            mse_metrics.append(loss.item())
+            del bce_metrics[0]
+            bce_metrics.append(loss.item())
 
             tqdm_bar.set_description(
                 f"Epoch {e:03} "
                 f"- save {save_idx - 1:03} "
                 f"[{iter_idx % train_options.save_every} "
                 f"/ {train_options.save_every}]: "
-                f"mse = {mean(mse_metrics):.5f}"
+                f"bce = {mean(bce_metrics):.5f}"
             )
 
             iter_idx += 1
