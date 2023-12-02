@@ -90,7 +90,7 @@ def process_data(
         slices_t = read_split_slices(img_folder, desired_size)
 
         assert label_t.size(0) == mask_t.size(0)
-        assert mask_t.size(0) == len(slices_t)
+        assert all(mask_t.size(0) == s.size(0) for s in slices_t)
 
         for i in tqdm(range(label_t.size(0))):
             if bool(mask_t[i]):

@@ -40,8 +40,8 @@ def main() -> None:
 
     data_parser.add_argument("extracted_zip_folder", type=str)
     data_parser.add_argument("output_folder", type=str)
-    data_parser.add_argument("--width", type=int, default=128)
-    data_parser.add_argument("--height", type=int, default=128)
+    data_parser.add_argument("--width", type=int, default=256)
+    data_parser.add_argument("--height", type=int, default=256)
     data_parser.add_argument("--images", type=int, nargs="+", default=[1, 2])
 
     ############
@@ -57,7 +57,7 @@ def main() -> None:
     )
     model_parser.add_argument("--num-groups", type=int, default=4)
     model_parser.add_argument("--trf-kernel-size", type=int, default=3)
-    model_parser.add_argument("--trf-padding", type=int, default=2)
+    model_parser.add_argument("--trf-padding", type=int, default=1)
     model_parser.add_argument("--trf-layers", type=int, default=3)
     model_parser.add_argument("--hidden", type=int, default=80)
     model_parser.add_argument("--num-heads", type=int, default=4)
