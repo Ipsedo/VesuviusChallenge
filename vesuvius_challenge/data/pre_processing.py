@@ -89,26 +89,19 @@ def process_data(
         mask_t = read_split_mask(img_folder, desired_size)
         slices_t = read_split_slices(img_folder, desired_size)
 
-        label_idx = idx
+        assert label_t.size(0) == mask_t.size(0)
+        assert mask_t.size(0) == len(slices_t)
+
         for i in tqdm(range(label_t.size(0))):
             if bool(mask_t[i]):
                 th.save(
                     label_t[i].clone(),
-                    join(output_folder, f"lbl_{label_idx}.pt"),
+                    join(output_folder, f"lbl_{idx}.pt"),
                 )
 
-                label_idx += 1
-
-        img_idx = idx
-        for i in tqdm(range(slices_t[0].size(0))):
-            if bool(mask_t[i]):
                 th.save(
                     th.stack([s[i] for s in slices_t], dim=-1).clone(),
                     join(output_folder, f"img_{img_idx}.pt"),
                 )
 
-                img_idx += 1
-
-        assert label_idx == img_idx
-
-        idx = img_idx
+                idx += 1
