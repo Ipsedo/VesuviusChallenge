@@ -30,7 +30,7 @@ class WindowedTransformer(nn.Module):
             num_decoder_layers=decoder_layers,
             dim_feedforward=hidden,
             batch_first=True,
-            activation="gelu",
+            activation="relu",
         )
 
     def __linear_path_unfold(self, t: th.Tensor) -> th.Tensor:

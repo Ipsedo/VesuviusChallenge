@@ -3,6 +3,7 @@ import argparse
 import re
 from typing import List, Tuple
 
+from .data import process_data
 from .options import ModelOptions, TrainOptions
 from .train import train
 
@@ -27,21 +28,48 @@ def _channels(string: str) -> List[Tuple[int, int]]:
 def main() -> None:
     parser = argparse.ArgumentParser("vesuvius_challenge main")
 
-    parser.add_argument(
+    main_sub_parser = parser.add_subparsers(
+        title="mode", required=True, dest="mode"
+    )
+
+    ############
+    # DataPrep #
+    ############
+
+    data_parser = main_sub_parser.add_parser("data")
+
+    data_parser.add_argument("extracted_zip_folder", type=str)
+    data_parser.add_argument("output_folder", type=str)
+    data_parser.add_argument("--width", type=int, default=128)
+    data_parser.add_argument("--height", type=int, default=128)
+    data_parser.add_argument("--images", type=int, nargs="+", default=[1, 2])
+
+    ############
+    # Modeling #
+    ############
+
+    model_parser = main_sub_parser.add_parser("model")
+
+    model_parser.add_argument(
         "--channels",
         type=_channels,
         default=[(1, 8), (8, 16), (16, 32), (32, 64)],
     )
-    parser.add_argument("--num-groups", type=int, default=4)
-    parser.add_argument("--trf-kernel-size", type=int, default=3)
-    parser.add_argument("--trf-padding", type=int, default=1)
-    parser.add_argument("--trf-layers", type=int, default=2)
-    parser.add_argument("--hidden", type=int, default=80)
-    parser.add_argument("--num-heads", type=int, default=4)
+    model_parser.add_argument("--num-groups", type=int, default=4)
+    model_parser.add_argument("--trf-kernel-size", type=int, default=3)
+    model_parser.add_argument("--trf-padding", type=int, default=2)
+    model_parser.add_argument("--trf-layers", type=int, default=3)
+    model_parser.add_argument("--hidden", type=int, default=80)
+    model_parser.add_argument("--num-heads", type=int, default=4)
 
-    sub_parser = parser.add_subparsers(title="mode", required=True)
+    model_mode_parser = model_parser.add_subparsers(
+        title="model_mode", required=True, dest="model_mode"
+    )
 
-    train_parser = sub_parser.add_parser("train")
+    # Train
+
+    train_parser = model_mode_parser.add_parser("train")
+
     train_parser.add_argument("dataset_path", type=str)
     train_parser.add_argument("output_path", type=str)
     train_parser.add_argument("--nb-epoch", type=int, default=100)
@@ -51,30 +79,52 @@ def main() -> None:
     train_parser.add_argument("--metric-length", type=int, default=64)
     train_parser.add_argument("--cuda", action="store_true")
 
+    # Infer
+
+    infer_parser = model_mode_parser.add_parser("infer")
+
     args = parser.parse_args()
 
-    model_options = ModelOptions(
-        channels=args.channels,
-        num_groups=args.num_groups,
-        trf_kernel_size=args.trf_kernel_size,
-        trf_padding=args.trf_padding,
-        trf_layers=args.trf_layers,
-        hidden=args.hidden,
-        num_heads=args.num_heads,
-    )
+    if args.mode == "model":
 
-    train_options = TrainOptions(
-        dataset_path=args.dataset_path,
-        output_path=args.output_path,
-        nb_epoch=args.nb_epoch,
-        learning_rate=args.learning_rate,
-        batch_size=args.batch_size,
-        save_every=args.save_every,
-        metric_length=args.metric_length,
-        cuda=args.cuda,
-    )
+        model_options = ModelOptions(
+            channels=args.channels,
+            num_groups=args.num_groups,
+            trf_kernel_size=args.trf_kernel_size,
+            trf_padding=args.trf_padding,
+            trf_layers=args.trf_layers,
+            hidden=args.hidden,
+            num_heads=args.num_heads,
+        )
 
-    train(model_options, train_options)
+        if args.model_mode == "train":
+
+            train_options = TrainOptions(
+                dataset_path=args.dataset_path,
+                output_path=args.output_path,
+                nb_epoch=args.nb_epoch,
+                learning_rate=args.learning_rate,
+                batch_size=args.batch_size,
+                save_every=args.save_every,
+                metric_length=args.metric_length,
+                cuda=args.cuda,
+            )
+
+            train(model_options, train_options)
+
+        elif args.model_mode == "infer":
+            print(infer_parser)
+        else:
+            model_parser.error(f'Unrecognized model_model "{args.model_mode}"')
+    elif args.mode == "data":
+        process_data(
+            args.extracted_zip_folder,
+            args.output_folder,
+            (args.width, args.height),
+            args.images,
+        )
+    else:
+        parser.error(f'Unrecognized mode "{args.mode}"')
 
 
 if __name__ == "__main__":

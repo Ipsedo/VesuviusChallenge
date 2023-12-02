@@ -16,7 +16,6 @@ class ModelOptions(NamedTuple):
     def new_model(self) -> TrfAutoEncoder:
         return TrfAutoEncoder(
             self.channels,
-            self.num_groups,
             self.trf_kernel_size,
             self.trf_padding,
             self.trf_layers,
@@ -34,3 +33,8 @@ class TrainOptions(NamedTuple):
     save_every: int
     metric_length: int
     cuda: bool
+
+
+class InferOptions(NamedTuple):
+    model_state_dict: str
+    output_path: str

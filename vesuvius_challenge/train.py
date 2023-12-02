@@ -36,8 +36,7 @@ def train(model_options: ModelOptions, train_options: TrainOptions) -> None:
     lbl_transform = Compose(
         [
             ToDType(th.float),
-            MinMaxScale([1, 2]),
-            RangeChange(0.0, 1.0),
+            # data is already {0, 1}
         ]
     )
 
@@ -74,8 +73,7 @@ def train(model_options: ModelOptions, train_options: TrainOptions) -> None:
             tgt = y.unsqueeze(-1).repeat(1, 1, 1, 1, x.size(-1))
             out = model(x, tgt)
 
-            loss = binary_cross_entropy(out, y, reduction="none")
-            loss = loss.sum(dim=[1, 2, 3]).mean()
+            loss = binary_cross_entropy(out, y, reduction="mean")
 
             optim.zero_grad()
             loss.backward()
@@ -89,7 +87,8 @@ def train(model_options: ModelOptions, train_options: TrainOptions) -> None:
                 f"- save {save_idx - 1:03} "
                 f"[{iter_idx % train_options.save_every} "
                 f"/ {train_options.save_every}]: "
-                f"bce = {mean(bce_metrics):.5f}"
+                f"bce = {mean(bce_metrics):.5f}, "
+                f"grad_norm = {model.grad_norm():.5f}"
             )
 
             iter_idx += 1

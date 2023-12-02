@@ -14,7 +14,6 @@ class TrfAutoEncoder(nn.Module):
     def __init__(
         self,
         channels: List[Tuple[int, int]],
-        num_groups: int,
         trf_kernel_size: int,
         trf_padding: int,
         trf_layers: int,
@@ -26,9 +25,9 @@ class TrfAutoEncoder(nn.Module):
         self.__encoder = nn.Sequential(
             *[
                 nn.Sequential(
-                    ConvBlock(c_i, c_o, num_groups),
-                    ConvBlock(c_o, c_o, num_groups),
-                    StrideConvBlock(c_o, c_o, num_groups, "down"),
+                    ConvBlock(c_i, c_o),
+                    ConvBlock(c_o, c_o),
+                    StrideConvBlock(c_o, c_o, "down"),
                 )
                 for c_i, c_o in channels
             ]
@@ -37,9 +36,9 @@ class TrfAutoEncoder(nn.Module):
         self.__target_encoder = nn.Sequential(
             *[
                 nn.Sequential(
-                    ConvBlock(c_i, c_o, num_groups),
-                    ConvBlock(c_o, c_o, num_groups),
-                    StrideConvBlock(c_o, c_o, num_groups, "down"),
+                    ConvBlock(c_i, c_o),
+                    ConvBlock(c_o, c_o),
+                    StrideConvBlock(c_o, c_o, "down"),
                 )
                 for c_i, c_o in channels
             ]
@@ -64,9 +63,9 @@ class TrfAutoEncoder(nn.Module):
         self.__decoder = nn.Sequential(
             *[
                 nn.Sequential(
-                    StrideConvBlock(c_i, c_i, num_groups, "up"),
-                    ConvBlock(c_i, c_i, num_groups),
-                    ConvBlock(c_i, c_o, num_groups),
+                    StrideConvBlock(c_i, c_i, "up"),
+                    ConvBlock(c_i, c_i),
+                    ConvBlock(c_i, c_o),
                 )
                 for c_i, c_o in decoder_channels
             ]
@@ -92,7 +91,7 @@ class TrfAutoEncoder(nn.Module):
 
         out: th.Tensor = self.__decoder(out_encoded)
         out = self.__output(out)
-        out = th.sigmoid(out.mean(dim=-1))
+        out = th.sigmoid(out.sum(dim=-1))
 
         return out
 
