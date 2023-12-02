@@ -9,7 +9,7 @@ from torch.nn import functional as F
 from torchvision.transforms import ToTensor
 from tqdm import tqdm
 
-_TO_TENSOR = ToTensor()
+_to_tensor = ToTensor()
 
 
 def read_split_label(
@@ -17,7 +17,7 @@ def read_split_label(
 ) -> th.Tensor:
     return (
         F.unfold(
-            _TO_TENSOR(Image.open(join(img_folder, "inklabels.png")))[None],
+            _to_tensor(Image.open(join(img_folder, "inklabels.png")))[None],
             desired_size,
             1,
             0,
@@ -34,7 +34,7 @@ def read_split_mask(
 ) -> th.Tensor:
     return (
         F.unfold(
-            _TO_TENSOR(Image.open(join(img_folder, "mask.png")))[None],
+            _to_tensor(Image.open(join(img_folder, "mask.png")))[None],
             desired_size,
             1,
             0,
@@ -52,7 +52,7 @@ def read_split_slices(
 ) -> List[th.Tensor]:
     return [
         F.unfold(
-            _TO_TENSOR(
+            _to_tensor(
                 Image.open(
                     join(img_folder, "surface_volume", f"{slice_idx:02}.tif")
                 )
