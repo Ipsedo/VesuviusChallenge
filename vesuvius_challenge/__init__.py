@@ -1,2 +1,3 @@
 # -*- coding: utf-8 -*-
-from .dummy import identity
+from .options import ModelOptions
+from .train import train

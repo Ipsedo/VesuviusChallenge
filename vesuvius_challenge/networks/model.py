@@ -13,6 +13,9 @@ class TrfAutoEncoder(nn.Module):
         self,
         channels: List[Tuple[int, int]],
         num_groups: int,
+        trf_kernel_size: int,
+        trf_padding: int,
+        trf_layers: int,
         hidden: int,
         num_heads: int,
     ) -> None:
@@ -26,8 +29,14 @@ class TrfAutoEncoder(nn.Module):
             *[ConvBlock(c_i, c_o, num_groups, "down") for c_i, c_o in channels]
         )
 
-        self.__windowed_trans = WindowedTransformer(
-            channels[-1][1], hidden, 3, 1, num_heads, 3, 3
+        self.__trf = WindowedTransformer(
+            channels[-1][1],
+            hidden,
+            trf_kernel_size,
+            trf_padding,
+            num_heads,
+            trf_layers,
+            trf_layers,
         )
 
         decoder_channels = [(c_o, c_i) for c_i, c_o in reversed(channels)]
@@ -57,9 +66,9 @@ class TrfAutoEncoder(nn.Module):
             assert all(x.size(i) == tgt.size(i) for i in range(len(x.size())))
 
             encoded_tgt = self.__target_encoder(tgt)
-            out_encoded = self.__windowed_trans(encoded_x, encoded_tgt)
+            out_encoded = self.__trf(encoded_x, encoded_tgt)
         else:
-            out_encoded = self.__windowed_trans(encoded_x)
+            out_encoded = self.__trf(encoded_x)
 
         out: th.Tensor = self.__decoder(out_encoded)
         out = self.__output(out)

@@ -1,0 +1,25 @@
+# -*- coding: utf-8 -*-
+from typing import List, NamedTuple, Tuple
+
+from .networks import TrfAutoEncoder
+
+
+class ModelOptions(NamedTuple):
+    channels: List[Tuple[int, int]]
+    num_groups: int
+    trf_kernel_size: int
+    trf_padding: int
+    trf_layers: int
+    hidden: int
+    num_heads: int
+
+    def new_model(self) -> TrfAutoEncoder:
+        return TrfAutoEncoder(
+            self.channels,
+            self.num_groups,
+            self.trf_kernel_size,
+            self.trf_padding,
+            self.trf_layers,
+            self.hidden,
+            self.num_heads,
+        )
