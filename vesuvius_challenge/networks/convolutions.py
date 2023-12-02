@@ -10,6 +10,26 @@ class ConvBlock(nn.Sequential):
         in_channels: int,
         out_channels: int,
         num_groups: int,
+    ) -> None:
+        super().__init__(
+            nn.Conv3d(
+                in_channels,
+                out_channels,
+                (3, 3, 3),
+                stride=(1, 1, 1),
+                padding=(1, 1, 1),
+            ),
+            nn.GELU(),
+            nn.GroupNorm(num_groups, out_channels),
+        )
+
+
+class StrideConvBlock(nn.Sequential):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        num_groups: int,
         scale: Literal["up", "down"],
     ) -> None:
         constructor = {
@@ -24,7 +44,7 @@ class ConvBlock(nn.Sequential):
                 stride=(2, 2, 2),
                 padding=(1, 1, 1),
             ),
-            nn.Mish(),
+            nn.GELU(),
             nn.GroupNorm(num_groups, out_channels),
         )
 

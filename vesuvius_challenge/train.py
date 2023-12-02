@@ -74,7 +74,8 @@ def train(model_options: ModelOptions, train_options: TrainOptions) -> None:
             tgt = y.unsqueeze(-1).repeat(1, 1, 1, 1, x.size(-1))
             out = model(x, tgt)
 
-            loss = binary_cross_entropy(out, y, reduction="mean")
+            loss = binary_cross_entropy(out, y, reduction="none")
+            loss = loss.sum(dim=[1, 2, 3]).mean()
 
             optim.zero_grad()
             loss.backward()
@@ -96,12 +97,12 @@ def train(model_options: ModelOptions, train_options: TrainOptions) -> None:
             if iter_idx % train_options.save_every == 0:
 
                 th.save(
-                    model,
+                    model.state_dict(),
                     join(train_options.output_path, f"model_{save_idx}.pt"),
                 )
 
                 th.save(
-                    optim,
+                    optim.state_dict,
                     join(train_options.output_path, f"optim_{save_idx}.pt"),
                 )
 

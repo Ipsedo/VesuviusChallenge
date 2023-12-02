@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
+from statistics import mean
 from typing import List, Optional, Tuple
 
 import numpy as np
 import torch as th
 from torch import nn
 
-from .convolutions import ConvBlock, OutputConv
+from .convolutions import ConvBlock, OutputConv, StrideConvBlock
 from .transformer import WindowedTransformer
 
 
@@ -23,11 +24,25 @@ class TrfAutoEncoder(nn.Module):
         super().__init__()
 
         self.__encoder = nn.Sequential(
-            *[ConvBlock(c_i, c_o, num_groups, "down") for c_i, c_o in channels]
+            *[
+                nn.Sequential(
+                    ConvBlock(c_i, c_o, num_groups),
+                    ConvBlock(c_o, c_o, num_groups),
+                    StrideConvBlock(c_o, c_o, num_groups, "down"),
+                )
+                for c_i, c_o in channels
+            ]
         )
 
         self.__target_encoder = nn.Sequential(
-            *[ConvBlock(c_i, c_o, num_groups, "down") for c_i, c_o in channels]
+            *[
+                nn.Sequential(
+                    ConvBlock(c_i, c_o, num_groups),
+                    ConvBlock(c_o, c_o, num_groups),
+                    StrideConvBlock(c_o, c_o, num_groups, "down"),
+                )
+                for c_i, c_o in channels
+            ]
         )
 
         self.__trf = WindowedTransformer(
@@ -48,7 +63,11 @@ class TrfAutoEncoder(nn.Module):
 
         self.__decoder = nn.Sequential(
             *[
-                ConvBlock(c_i, c_o, num_groups, "up")
+                nn.Sequential(
+                    StrideConvBlock(c_i, c_i, num_groups, "up"),
+                    ConvBlock(c_i, c_i, num_groups),
+                    ConvBlock(c_i, c_o, num_groups),
+                )
                 for c_i, c_o in decoder_channels
             ]
         )
@@ -73,7 +92,7 @@ class TrfAutoEncoder(nn.Module):
 
         out: th.Tensor = self.__decoder(out_encoded)
         out = self.__output(out)
-        out = th.sigmoid(out.sum(dim=-1))
+        out = th.sigmoid(out.mean(dim=-1))
 
         return out
 
@@ -81,5 +100,14 @@ class TrfAutoEncoder(nn.Module):
         return int(
             sum(
                 np.prod(p.size()) for p in self.parameters() if p.requires_grad
+            )
+        )
+
+    def grad_norm(self) -> float:
+        return float(
+            mean(
+                p.grad.norm().item()
+                for p in self.parameters()
+                if p.grad is not None
             )
         )
