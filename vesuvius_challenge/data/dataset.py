@@ -6,11 +6,17 @@ from typing import Tuple
 
 import torch as th
 from torch.utils.data import Dataset
+from torchvision.transforms import Compose
 from tqdm import tqdm
 
 
 class VesuviusDataset(Dataset):
-    def __init__(self, data_folder_path: str) -> None:
+    def __init__(
+        self,
+        data_folder_path: str,
+        img_transform: Compose,
+        lbl_transform: Compose,
+    ) -> None:
         super().__init__()
 
         assert exists(data_folder_path)
@@ -41,9 +47,12 @@ class VesuviusDataset(Dataset):
 
         assert len(self.__img_path) == len(self.__lbl_path)
 
+        self.__img_tr = img_transform
+        self.__lbl_tr = lbl_transform
+
     def __getitem__(self, idx: int) -> Tuple[th.Tensor, th.Tensor]:
-        img = th.load(self.__img_path[idx])
-        lbl = th.load(self.__lbl_path[idx])
+        img = self.__img_tr(th.load(self.__img_path[idx]))
+        lbl = self.__lbl_tr(th.load(self.__lbl_path[idx]))
         return img, lbl
 
     def __len__(self) -> int:

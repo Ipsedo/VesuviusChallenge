@@ -23,3 +23,14 @@ class ModelOptions(NamedTuple):
             self.hidden,
             self.num_heads,
         )
+
+
+class TrainOptions(NamedTuple):
+    dataset_path: str
+    output_path: str
+    nb_epoch: int
+    learning_rate: float
+    batch_size: int
+    save_every: int
+    metric_length: int
+    cuda: bool
