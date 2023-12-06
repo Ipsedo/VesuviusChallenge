@@ -29,7 +29,7 @@ def train(model_options: ModelOptions, train_options: TrainOptions) -> None:
         [
             ToDType(th.float),
             MinMaxScale([1, 2, 3]),
-            RangeChange(0.0, 1.0),
+            RangeChange(-1.0, 1.0),
         ]
     )
 
@@ -74,6 +74,7 @@ def train(model_options: ModelOptions, train_options: TrainOptions) -> None:
             out = model(x, tgt)
 
             loss = binary_cross_entropy(out, y, reduction="mean")
+            loss = loss.mean()
 
             optim.zero_grad()
             loss.backward()

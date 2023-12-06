@@ -74,6 +74,7 @@ def process_data(
     output_folder: str,
     desired_size: Tuple[int, int],
     image_index: List[int],
+    filter_full_lbl_patches: bool,
 ) -> None:
     if not exists(output_folder):
         mkdir(output_folder)
@@ -92,8 +93,15 @@ def process_data(
         assert label_t.size(0) == mask_t.size(0)
         assert all(mask_t.size(0) == s.size(0) for s in slices_t)
 
+        full_lbl_t = label_t.eq(0).flatten(-2, -1).all(dim=-1) | label_t.eq(
+            1
+        ).flatten(-2, -1).all(dim=-1)
+
         for i in tqdm(range(label_t.size(0))):
             if bool(mask_t[i]):
+                if filter_full_lbl_patches and bool(full_lbl_t[i]):
+                    continue
+
                 th.save(
                     label_t[i].clone(),
                     join(output_folder, f"lbl_{idx}.pt"),
@@ -101,7 +109,7 @@ def process_data(
 
                 th.save(
                     th.stack([s[i] for s in slices_t], dim=-1).clone(),
-                    join(output_folder, f"img_{img_idx}.pt"),
+                    join(output_folder, f"img_{idx}.pt"),
                 )
 
                 idx += 1

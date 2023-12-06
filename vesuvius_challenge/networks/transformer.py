@@ -97,15 +97,12 @@ class WindowedTransformer(nn.Module):
                         input_trf.size(0), 1, self.__channels, device=device
                     ),
                     # reshape
-                    self.__linear_path_unfold(target_encoded),
+                    self.__linear_path_unfold(target_encoded)[:, :-1, :],
                 ],
                 dim=1,
             )
 
             out: th.Tensor = self.__trf(input_trf, target_trf)
-
-            # remove end token
-            out = out[:, :-1, :]
         else:
             # auto-regressive generation
             out = self.__generate(input_trf, len(sizes))
