@@ -50,7 +50,6 @@ def main() -> None:
 
     model_parser = main_sub_parser.add_parser("model")
 
-    model_parser.add_argument("--slices", type=int, default=64)
     model_parser.add_argument(
         "--channels",
         type=_channels,
@@ -89,7 +88,6 @@ def main() -> None:
     if args.mode == "model":
 
         model_options = ModelOptions(
-            slices=args.slices,
             channels=args.channels,
             num_groups=args.num_groups,
             trf_kernel_size=args.trf_kernel_size,

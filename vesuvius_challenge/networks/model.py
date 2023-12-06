@@ -6,14 +6,13 @@ import numpy as np
 import torch as th
 from torch import nn
 
-from .convolutions import ConvBlock, StrideConvBlock
+from .convolutions import ConvBlock, OutputConv, StrideConvBlock
 from .transformer import WindowedTransformer
 
 
 class TrfAutoEncoder(nn.Module):
     def __init__(
         self,
-        slices: int,
         channels: List[Tuple[int, int]],
         num_groups: int,
         trf_kernel_size: int,
@@ -68,9 +67,7 @@ class TrfAutoEncoder(nn.Module):
         c_o = decoder_channels[-1][0]
         self.__output = nn.Sequential(
             ConvBlock(c_o, c_o, num_groups),
-            ConvBlock(c_o, 1, 1),
-            nn.Linear(slices, 1),
-            nn.Flatten(-2, -1),
+            OutputConv(c_o, 1),
             nn.Sigmoid(),
         )
 
@@ -93,7 +90,7 @@ class TrfAutoEncoder(nn.Module):
             out_encoded = self.__trf(encoded_x)
 
         out: th.Tensor = self.__decoder(out_encoded)
-        out = self.__output(out)
+        out = self.__output(out).log().sum(dim=-1).exp()
 
         return out
 
