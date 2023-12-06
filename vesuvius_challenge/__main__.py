@@ -53,13 +53,13 @@ def main() -> None:
     model_parser.add_argument(
         "--channels",
         type=_channels,
-        default=[(1, 8), (8, 16), (16, 32), (32, 64)],
+        default=[(1, 4), (4, 8), (8, 16), (16, 24), (24, 32)],
     )
     model_parser.add_argument("--num-groups", type=int, default=4)
     model_parser.add_argument("--trf-kernel-size", type=int, default=3)
     model_parser.add_argument("--trf-padding", type=int, default=1)
-    model_parser.add_argument("--trf-layers", type=int, default=3)
-    model_parser.add_argument("--hidden", type=int, default=80)
+    model_parser.add_argument("--trf-layers", type=int, default=2)
+    model_parser.add_argument("--hidden", type=int, default=64)
     model_parser.add_argument("--num-heads", type=int, default=4)
 
     model_mode_parser = model_parser.add_subparsers(

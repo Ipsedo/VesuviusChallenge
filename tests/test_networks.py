@@ -50,7 +50,7 @@ def test_windowed_transformer(
 @pytest.mark.parametrize("sizes", [[16, 16, 16], [8, 8, 8]])
 def test_model(batch_size: int, sizes: List[int]) -> None:
     trf_ae = TrfAutoEncoder(
-        [(2, 4), (4, 8)],
+        [(1, 4), (4, 8)],
         2,
         3,
         1,

@@ -102,7 +102,13 @@ class WindowedTransformer(nn.Module):
                 dim=1,
             )
 
-            out: th.Tensor = self.__trf(input_trf, target_trf)
+            tgt_mask = self.__trf.generate_square_subsequent_mask(
+                target_trf.size(1), device=input_trf.device
+            )
+
+            out: th.Tensor = self.__trf(
+                input_trf, target_trf, tgt_mask=tgt_mask
+            )
         else:
             # auto-regressive generation
             out = self.__generate(input_trf, len(sizes))
