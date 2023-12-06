@@ -122,7 +122,7 @@ def main() -> None:
             args.output_folder,
             (args.width, args.height),
             args.images,
-            True,
+            False,
         )
     else:
         parser.error(f'Unrecognized mode "{args.mode}"')
