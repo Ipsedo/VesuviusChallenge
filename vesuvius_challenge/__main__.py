@@ -59,8 +59,8 @@ def main() -> None:
     model_parser.add_argument("--trf-kernel-size", type=int, default=3)
     model_parser.add_argument("--trf-padding", type=int, default=1)
     model_parser.add_argument("--trf-layers", type=int, default=3)
-    model_parser.add_argument("--hidden", type=int, default=80)
-    model_parser.add_argument("--num-heads", type=int, default=4)
+    model_parser.add_argument("--trf-hidden", type=int, default=80)
+    model_parser.add_argument("--trf-num-heads", type=int, default=4)
 
     model_mode_parser = model_parser.add_subparsers(
         title="model_mode", required=True, dest="model_mode"
@@ -93,8 +93,8 @@ def main() -> None:
             trf_kernel_size=args.trf_kernel_size,
             trf_padding=args.trf_padding,
             trf_layers=args.trf_layers,
-            hidden=args.hidden,
-            num_heads=args.num_heads,
+            hidden=args.trf_hidden,
+            num_heads=args.trf_num_heads,
         )
 
         if args.model_mode == "train":
