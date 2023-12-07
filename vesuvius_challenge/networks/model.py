@@ -23,10 +23,7 @@ class TrfAutoEncoder(nn.Module):
     ) -> None:
         super().__init__()
 
-        self.__input = ConvBlock(1, channels[0][0], num_groups)
-        self.__target = ConvBlock(1, channels[0][0], num_groups)
-
-        self.__encoder = nn.Sequential(
+        self.__input_encoder = nn.Sequential(
             *[
                 nn.Sequential(
                     ConvBlock(c_i, c_o, num_groups),
@@ -35,6 +32,23 @@ class TrfAutoEncoder(nn.Module):
                 )
                 for c_i, c_o in channels
             ]
+        )
+
+        self.__target_encoder = nn.Sequential(
+            *[
+                nn.Sequential(
+                    ConvBlock(c_i, c_o, num_groups),
+                    StrideConvBlock(c_o, c_o, num_groups, "down"),
+                    # nn.MaxPool3d(2, 2),
+                )
+                for c_i, c_o in channels
+            ]
+        )
+
+        c_m = channels[-1][1]
+        self.__to_trf = nn.Sequential(
+            ConvBlock(c_m, c_m, num_groups),
+            ConvBlock(c_m, c_m, num_groups),
         )
 
         self.__trf = WindowedTransformer(
@@ -64,11 +78,11 @@ class TrfAutoEncoder(nn.Module):
             ]
         )
 
-        c_o = decoder_channels[-1][0]
+        c_i = decoder_channels[-1][0]
+        c_o = channels[0][0]
         self.__output = nn.Sequential(
-            ConvBlock(c_o, c_o, num_groups),
-            OutputConv(c_o, 1),
-            nn.Sigmoid(),
+            ConvBlock(c_i, c_i, num_groups),
+            OutputConv(c_i, c_o),
         )
 
     def forward(
@@ -76,21 +90,21 @@ class TrfAutoEncoder(nn.Module):
     ) -> th.Tensor:
         assert len(x.size()) == 5
 
-        encoded_x = self.__input(x)
-        encoded_x = self.__encoder(encoded_x)
+        encoded_x = self.__input_encoder(x)
+        encoded_x = self.__to_trf(encoded_x)
 
         if tgt is not None:
             assert len(tgt.size()) == len(x.size())
             assert all(x.size(i) == tgt.size(i) for i in range(len(x.size())))
 
-            encoded_tgt = self.__target(tgt)
-            encoded_tgt = self.__encoder(encoded_tgt)
+            encoded_tgt = self.__target_encoder(tgt)
+            encoded_tgt = self.__to_trf(encoded_tgt)
             out_encoded = self.__trf(encoded_x, encoded_tgt)
         else:
             out_encoded = self.__trf(encoded_x)
 
         out: th.Tensor = self.__decoder(out_encoded)
-        out = self.__output(out).log().sum(dim=-1).exp()
+        out = th.sigmoid(self.__output(out).sum(dim=-1))
 
         return out
 
