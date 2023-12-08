@@ -56,13 +56,16 @@ def read_split_slices(
                 Image.open(
                     join(img_folder, "surface_volume", f"{slice_idx:02}.tif")
                 )
-            ).to(th.float32),
+            )
+            .to(th.float32)
+            .div(2**16)
+            .mul(2.0)
+            .sub(1.0),
             desired_size,
             1,
             0,
             desired_size,
         )
-        .to(th.int16)
         .view(1, desired_size[0], desired_size[1], -1)
         .permute(3, 0, 1, 2)
         for slice_idx in tqdm(range(1, 65))

@@ -43,15 +43,7 @@ class WindowedTransformer(nn.Module):
         pe[0, :, 1::2] = th.cos(position * div_term)
         self.register_buffer("_pe", pe)
 
-        self.__start_pixel = nn.Parameter(
-            th.randn(
-                (
-                    1,
-                    1,
-                    channels,
-                )
-            )
-        )
+        self.__start_pixel = nn.Parameter(th.randn((1, 1, channels)))
 
     def __linear_path_unfold(self, t: th.Tensor) -> th.Tensor:
         b = t.size(0)
