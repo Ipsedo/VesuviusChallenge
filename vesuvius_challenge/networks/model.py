@@ -45,12 +45,6 @@ class TrfAutoEncoder(nn.Module):
             ]
         )
 
-        c_m = channels[-1][1]
-        self.__to_trf = nn.Sequential(
-            ConvBlock(c_m, c_m, num_groups),
-            ConvBlock(c_m, c_m, num_groups),
-        )
-
         self.__trf = WindowedTransformer(
             channels[-1][1],
             hidden,
@@ -81,8 +75,7 @@ class TrfAutoEncoder(nn.Module):
         c_i = decoder_channels[-1][0]
         c_o = channels[0][0]
         self.__output = nn.Sequential(
-            ConvBlock(c_i, c_i, num_groups),
-            OutputConv(c_i, c_o),
+            ConvBlock(c_i, c_i, num_groups), OutputConv(c_i, c_o), nn.Sigmoid()
         )
 
     def forward(
@@ -91,20 +84,18 @@ class TrfAutoEncoder(nn.Module):
         assert len(x.size()) == 5
 
         encoded_x = self.__input_encoder(x)
-        encoded_x = self.__to_trf(encoded_x)
 
         if tgt is not None:
             assert len(tgt.size()) == len(x.size())
             assert all(x.size(i) == tgt.size(i) for i in range(len(x.size())))
 
             encoded_tgt = self.__target_encoder(tgt)
-            encoded_tgt = self.__to_trf(encoded_tgt)
             out_encoded = self.__trf(encoded_x, encoded_tgt)
         else:
             out_encoded = self.__trf(encoded_x)
 
         out: th.Tensor = self.__decoder(out_encoded)
-        out = th.sigmoid(self.__output(out).sum(dim=-1))
+        out = self.__output(out).mean(dim=-1)
 
         return out
 

@@ -28,6 +28,7 @@ def train(model_options: ModelOptions, train_options: TrainOptions) -> None:
     img_transform = Compose(
         [
             ToDType(th.float),
+            # data is already [-1; 1]
         ]
     )
 
