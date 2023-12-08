@@ -58,7 +58,6 @@ def read_split_slices(
                 )
             )
             .to(th.float32)
-            .div(2**16)
             .mul(2.0)
             .sub(1.0),
             desired_size,

@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
 from tqdm import tqdm
 
-from .data import MinMaxScale, RangeChange, ToDType, VesuviusDataset
+from .data import ToDType, VesuviusDataset
 from .options import ModelOptions, TrainOptions
 
 
@@ -28,8 +28,6 @@ def train(model_options: ModelOptions, train_options: TrainOptions) -> None:
     img_transform = Compose(
         [
             ToDType(th.float),
-            MinMaxScale([1, 2, 3]),
-            RangeChange(-1.0, 1.0),
         ]
     )
 
