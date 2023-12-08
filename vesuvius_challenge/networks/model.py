@@ -75,7 +75,8 @@ class TrfAutoEncoder(nn.Module):
         c_i = decoder_channels[-1][0]
         c_o = channels[0][0]
         self.__output = nn.Sequential(
-            ConvBlock(c_i, c_i, num_groups), OutputConv(c_i, c_o), nn.Sigmoid()
+            ConvBlock(c_i, c_i, num_groups),
+            OutputConv(c_i, c_o),
         )
 
     def forward(
@@ -95,7 +96,7 @@ class TrfAutoEncoder(nn.Module):
             out_encoded = self.__trf(encoded_x)
 
         out: th.Tensor = self.__decoder(out_encoded)
-        out = self.__output(out).mean(dim=-1)
+        out = th.sigmoid(self.__output(out).mean(dim=-1))
 
         return out
 
