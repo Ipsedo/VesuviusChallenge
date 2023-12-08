@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from math import log
 from typing import Optional
 
 import torch as th
@@ -33,6 +34,25 @@ class WindowedTransformer(nn.Module):
             activation="relu",
         )
 
+        position = th.arange(kernel_size**3).unsqueeze(1)
+        div_term = th.exp(
+            th.arange(0, channels, 2) * (-log(10000.0) / channels)
+        )
+        pe = th.zeros(1, kernel_size**3, channels)
+        pe[0, :, 0::2] = th.sin(position * div_term)
+        pe[0, :, 1::2] = th.cos(position * div_term)
+        self.register_buffer("_pe", pe)
+
+        self.__start_pixel = nn.Parameter(
+            th.randn(
+                (
+                    1,
+                    1,
+                    channels,
+                )
+            )
+        )
+
     def __linear_path_unfold(self, t: th.Tensor) -> th.Tensor:
         b = t.size(0)
         sizes = t.size()[2:]
@@ -55,14 +75,15 @@ class WindowedTransformer(nn.Module):
         return out
 
     def __generate(self, input_trf: th.Tensor, nb_dim: int) -> th.Tensor:
-        device = "cuda" if next(self.parameters()).is_cuda else "cpu"
-        b, _, c = input_trf.size()
+        input_trf = input_trf + self._pe
 
         # start token
-        target = th.zeros((b, 1, c), device=device)
+        target = self.__start_pixel.repeat(input_trf.size(0), 1, 1)
 
         for _ in range(self.__kernel_size**nb_dim):
-            out = self.__trf(input_trf, target)
+            out = self.__trf(
+                input_trf, target + self._pe[:, : target.size(1), :]
+            )
             target = th.cat([target, out[:, -1, None, :]], dim=1)
 
         # remove start token
@@ -78,7 +99,7 @@ class WindowedTransformer(nn.Module):
         b = input_encoded.size(0)
         sizes = input_encoded.size()[2:]
 
-        input_trf = self.__linear_path_unfold(input_encoded)
+        input_trf = self.__linear_path_unfold(input_encoded) + self._pe
 
         if target_encoded is not None:
             # training
@@ -88,19 +109,15 @@ class WindowedTransformer(nn.Module):
                 for i in range(len(input_encoded.size()))
             )
 
-            device = "cuda" if next(self.parameters()).is_cuda else "cpu"
-
             target_trf = th.cat(
                 [
-                    # start token
-                    th.zeros(
-                        input_trf.size(0), 1, self.__channels, device=device
-                    ),
-                    # reshape
+                    self.__start_pixel.repeat(input_trf.size(0), 1, 1),
                     self.__linear_path_unfold(target_encoded)[:, :-1, :],
                 ],
                 dim=1,
             )
+
+            target_trf = target_trf + self._pe
 
             tgt_mask = self.__trf.generate_square_subsequent_mask(
                 target_trf.size(1), device=input_trf.device

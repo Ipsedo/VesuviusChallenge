@@ -13,7 +13,7 @@ from vesuvius_challenge.networks.transformer import WindowedTransformer
 @pytest.mark.parametrize("hidden", [2, 4])
 @pytest.mark.parametrize("kernel_size", [2, 3])
 @pytest.mark.parametrize("num_heads", [1, 2])
-@pytest.mark.parametrize("sizes", [[8, 8], [8, 8, 8]])
+@pytest.mark.parametrize("sizes", [[8, 8, 8], [8, 8, 8]])
 def test_windowed_transformer(
     batch_size: int,
     channels: int,
