@@ -55,9 +55,8 @@ def read_split_slices(
             _to_tensor(
                 Image.open(
                     join(img_folder, "surface_volume", f"{slice_idx:02}.tif")
-                )
+                ).convert("I;16B")
             )
-            .to(th.float32)
             .mul(2.0)
             .sub(1.0),
             desired_size,
