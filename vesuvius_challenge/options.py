@@ -6,6 +6,7 @@ from .networks import TrfAutoEncoder
 
 class ModelOptions(NamedTuple):
     channels: List[Tuple[int, int]]
+    slices: int
     num_groups: int
     trf_kernel_size: int
     trf_padding: int
@@ -16,6 +17,7 @@ class ModelOptions(NamedTuple):
     def new_model(self) -> TrfAutoEncoder:
         return TrfAutoEncoder(
             self.channels,
+            self.slices,
             self.num_groups,
             self.trf_kernel_size,
             self.trf_padding,

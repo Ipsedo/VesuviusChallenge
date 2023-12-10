@@ -22,6 +22,7 @@ class TrfAutoEncoder(nn.Module):
     def __init__(
         self,
         channels: List[Tuple[int, int]],
+        slices: int,
         num_groups: int,
         trf_kernel_size: int,
         trf_padding: int,
@@ -31,7 +32,7 @@ class TrfAutoEncoder(nn.Module):
     ) -> None:
         super().__init__()
 
-        self.__slices = 64
+        self.__slices = slices
 
         self.__input_encoder = nn.ModuleList(
             nn.Sequential(
@@ -72,12 +73,7 @@ class TrfAutoEncoder(nn.Module):
 
         self.__to_decoder = nn.ModuleList(
             nn.Sequential(
-                nn.Linear(
-                    self.__slices // 2 ** (i + 1),
-                    2 * self.__slices // 2 ** (i + 1),
-                ),
-                nn.Mish(),
-                nn.Linear(2 * self.__slices // 2 ** (i + 1), 1),
+                nn.Linear(self.__slices // 2 ** (i + 1), 1),
                 nn.Flatten(-2, -1),
             )
             for i in reversed(range(len(channels)))
@@ -112,16 +108,16 @@ class TrfAutoEncoder(nn.Module):
 
         out = self.__flat(out)
 
-        """if tgt is not None:
+        if tgt is not None:
             assert len(tgt.size()) == len(x.size()) - 1
             assert all(
                 x.size(i) == tgt.size(i) for i in range(len(x.size()) - 1)
             )
 
             encoded_tgt = self.__target_encoder(tgt)
-            out_encoded = self.__trf(encoded_x, encoded_tgt)
+            out = self.__trf(out, encoded_tgt)
         else:
-            out_encoded = self.__trf(encoded_x)"""
+            out = self.__trf(out)
 
         for dec, bypass, to_dec in zip(
             self.__decoder, reversed(bypasses), self.__to_decoder
