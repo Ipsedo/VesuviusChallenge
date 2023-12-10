@@ -31,14 +31,14 @@ class TrfAutoEncoder(nn.Module):
     ) -> None:
         super().__init__()
 
-        self.__input_encoder = nn.Sequential(
-            *[
-                nn.Sequential(
-                    Conv3dBlock(c_i, c_o, num_groups),
-                    DownConv3dBlock(c_o, c_o, num_groups),
-                )
-                for c_i, c_o in channels
-            ]
+        self.__slices = 64
+
+        self.__input_encoder = nn.ModuleList(
+            nn.Sequential(
+                Conv3dBlock(c_i, c_o, num_groups),
+                DownConv3dBlock(c_o, c_o, num_groups),
+            )
+            for c_i, c_o in channels
         )
 
         self.__target_encoder = nn.Sequential(
@@ -70,14 +70,25 @@ class TrfAutoEncoder(nn.Module):
             decoder_channels[-1][0],
         )
 
-        self.__decoder = nn.Sequential(
-            *[
-                nn.Sequential(
-                    Conv2dBlock(c_i, c_o, num_groups),
-                    UpConv2dBlock(c_o, c_o, num_groups),
-                )
-                for c_i, c_o in decoder_channels
-            ]
+        self.__to_decoder = nn.ModuleList(
+            nn.Sequential(
+                nn.Linear(
+                    self.__slices // 2 ** (i + 1),
+                    2 * self.__slices // 2 ** (i + 1),
+                ),
+                nn.Mish(),
+                nn.Linear(2 * self.__slices // 2 ** (i + 1), 1),
+                nn.Flatten(-2, -1),
+            )
+            for i in reversed(range(len(channels)))
+        )
+
+        self.__decoder = nn.ModuleList(
+            nn.Sequential(
+                Conv2dBlock(c_i, c_o, num_groups),
+                UpConv2dBlock(c_o, c_o, num_groups),
+            )
+            for c_i, c_o in decoder_channels
         )
 
         c_i = decoder_channels[-1][0]
@@ -93,10 +104,15 @@ class TrfAutoEncoder(nn.Module):
     ) -> th.Tensor:
         assert len(x.size()) == 5
 
-        encoded_x = self.__input_encoder(x)
-        encoded_x = self.__flat(encoded_x)
+        out = x
+        bypasses = []
+        for enc in self.__input_encoder:
+            out = enc(out)
+            bypasses.append(out)
 
-        if tgt is not None:
+        out = self.__flat(out)
+
+        """if tgt is not None:
             assert len(tgt.size()) == len(x.size()) - 1
             assert all(
                 x.size(i) == tgt.size(i) for i in range(len(x.size()) - 1)
@@ -105,9 +121,15 @@ class TrfAutoEncoder(nn.Module):
             encoded_tgt = self.__target_encoder(tgt)
             out_encoded = self.__trf(encoded_x, encoded_tgt)
         else:
-            out_encoded = self.__trf(encoded_x)
+            out_encoded = self.__trf(encoded_x)"""
 
-        out: th.Tensor = self.__decoder(out_encoded)
+        for dec, bypass, to_dec in zip(
+            self.__decoder, reversed(bypasses), self.__to_decoder
+        ):
+            bypass = to_dec(bypass)
+            out = out + bypass
+            out = dec(out)
+
         out = self.__output(out)
 
         return out
