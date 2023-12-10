@@ -108,7 +108,7 @@ class TrfAutoEncoder(nn.Module):
 
         out = self.__flat(out)
 
-        if tgt is not None:
+        """if tgt is not None:
             assert len(tgt.size()) == len(x.size()) - 1
             assert all(
                 x.size(i) == tgt.size(i) for i in range(len(x.size()) - 1)
@@ -117,7 +117,7 @@ class TrfAutoEncoder(nn.Module):
             encoded_tgt = self.__target_encoder(tgt)
             out = self.__trf(out, encoded_tgt)
         else:
-            out = self.__trf(out)
+            out = self.__trf(out)"""
 
         for dec, bypass, to_dec in zip(
             self.__decoder, reversed(bypasses), self.__to_decoder
