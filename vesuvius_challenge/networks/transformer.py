@@ -11,6 +11,7 @@ class WindowedTransformer(nn.Module):
     def __init__(
         self,
         channels: int,
+        nb_dim: int,
         hidden: int,
         kernel_size: int,
         padding: int,
@@ -21,6 +22,7 @@ class WindowedTransformer(nn.Module):
         super().__init__()
 
         self.__channels = channels
+        self.__nb_dim = nb_dim
         self.__kernel_size = kernel_size
         self.__padding = padding
 
@@ -34,11 +36,11 @@ class WindowedTransformer(nn.Module):
             activation="relu",
         )
 
-        position = th.arange(kernel_size**3).unsqueeze(1)
+        position = th.arange(kernel_size**self.__nb_dim).unsqueeze(1)
         div_term = th.exp(
-            th.arange(0, channels, 2) * (-log(10000.0) / channels)
+            th.arange(0, channels, 2) * th.tensor(-log(10000.0) / channels)
         )
-        pe = th.zeros(1, kernel_size**3, channels)
+        pe = th.zeros(1, kernel_size**self.__nb_dim, channels)
         pe[0, :, 0::2] = th.sin(position * div_term)
         pe[0, :, 1::2] = th.cos(position * div_term)
         self.register_buffer("_pe", pe)
@@ -66,13 +68,13 @@ class WindowedTransformer(nn.Module):
 
         return out
 
-    def __generate(self, input_trf: th.Tensor, nb_dim: int) -> th.Tensor:
+    def __generate(self, input_trf: th.Tensor) -> th.Tensor:
         input_trf = input_trf + self._pe
 
         # start token
         target = self.__start_pixel.repeat(input_trf.size(0), 1, 1)
 
-        for _ in range(self.__kernel_size**nb_dim):
+        for _ in range(self.__kernel_size**self.__nb_dim):
             out = self.__trf(
                 input_trf, target + self._pe[:, : target.size(1), :]
             )
@@ -120,7 +122,7 @@ class WindowedTransformer(nn.Module):
             )
         else:
             # auto-regressive generation
-            out = self.__generate(input_trf, len(sizes))
+            out = self.__generate(input_trf)
 
         out = (
             out.view(b, -1, self.__kernel_size ** len(sizes), self.__channels)

@@ -69,11 +69,9 @@ def train(model_options: ModelOptions, train_options: TrainOptions) -> None:
                 x = x.cuda()
                 y = y.cuda()
 
-            tgt = y.unsqueeze(-1).repeat(1, 1, 1, 1, x.size(-1))
-            out = model(x, tgt)
+            out = model(x, y)
 
             loss = binary_cross_entropy(out, y, reduction="mean")
-            loss = loss.mean()
 
             optim.zero_grad()
             loss.backward()

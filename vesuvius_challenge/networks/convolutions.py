@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-from typing import Literal
 
 from torch import nn
 
 
-class ConvBlock(nn.Sequential):
+class Conv3dBlock(nn.Sequential):
     def __init__(
         self,
         in_channels: int,
@@ -25,42 +24,95 @@ class ConvBlock(nn.Sequential):
         )
 
 
-class StrideConvBlock(nn.Sequential):
+class DownConv3dBlock(nn.Sequential):
     def __init__(
         self,
         in_channels: int,
         out_channels: int,
         num_groups: int,
-        scale: Literal["up", "down"],
     ) -> None:
-        constructor = {
-            "up": nn.ConvTranspose3d,
-            "down": nn.Conv3d,
-        }
-
-        padding = {
-            "up": "zeros",
-            "down": "replicate",
-        }
 
         super().__init__(
-            constructor[scale](
+            nn.Conv3d(
                 in_channels,
                 out_channels,
                 (4, 4, 4),
                 stride=(2, 2, 2),
                 padding=(1, 1, 1),
-                padding_mode=padding[scale],
+                padding_mode="replicate",
             ),
             nn.Mish(),
             nn.GroupNorm(num_groups, out_channels),
         )
 
 
-class OutputConv(nn.Sequential):
+class DownConv2dBlock(nn.Sequential):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        num_groups: int,
+    ) -> None:
+        super().__init__(
+            nn.Conv2d(
+                in_channels,
+                out_channels,
+                (4, 4),
+                stride=(2, 2),
+                padding=(1, 1),
+                padding_mode="replicate",
+            ),
+            nn.Mish(),
+            nn.GroupNorm(num_groups, out_channels),
+        )
+
+
+class Conv2dBlock(nn.Sequential):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        num_groups: int,
+    ) -> None:
+        super().__init__(
+            nn.Conv2d(
+                in_channels,
+                out_channels,
+                (3, 3),
+                (1, 1),
+                (1, 1),
+                padding_mode="replicate",
+            ),
+            nn.Mish(),
+            nn.GroupNorm(num_groups, out_channels),
+        )
+
+
+class UpConv2dBlock(nn.Sequential):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        num_groups: int,
+    ) -> None:
+        super().__init__(
+            nn.ConvTranspose2d(
+                in_channels,
+                out_channels,
+                (4, 4),
+                (2, 2),
+                (1, 1),
+                padding_mode="zeros",
+            ),
+            nn.Mish(),
+            nn.GroupNorm(num_groups, out_channels),
+        )
+
+
+class OutputConv2d(nn.Sequential):
     def __init__(self, in_channels: int, out_channels: int) -> None:
         super().__init__(
-            nn.Conv3d(
+            nn.Conv2d(
                 in_channels,
                 out_channels,
                 1,

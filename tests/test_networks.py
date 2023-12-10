@@ -13,7 +13,7 @@ from vesuvius_challenge.networks.transformer import WindowedTransformer
 @pytest.mark.parametrize("hidden", [2, 4])
 @pytest.mark.parametrize("kernel_size", [2, 3])
 @pytest.mark.parametrize("num_heads", [1, 2])
-@pytest.mark.parametrize("sizes", [[8, 8, 8], [8, 8, 8]])
+@pytest.mark.parametrize("sizes", [[8, 8], [8, 8, 8]])
 def test_windowed_transformer(
     batch_size: int,
     channels: int,
@@ -23,7 +23,14 @@ def test_windowed_transformer(
     sizes: List[int],
 ) -> None:
     trf = WindowedTransformer(
-        channels, hidden, kernel_size, kernel_size // 2, num_heads, 3, 3
+        channels,
+        len(sizes),
+        hidden,
+        kernel_size,
+        kernel_size // 2,
+        num_heads,
+        3,
+        3,
     )
 
     x = th.rand(batch_size, channels, *sizes)
@@ -60,7 +67,7 @@ def test_model(batch_size: int, sizes: List[int]) -> None:
     )
 
     x = th.rand(batch_size, 1, *sizes)
-    tgt = th.rand(batch_size, 1, *sizes)
+    tgt = th.rand(batch_size, 1, *sizes[:-1])
 
     out = trf_ae(x, tgt)
 
