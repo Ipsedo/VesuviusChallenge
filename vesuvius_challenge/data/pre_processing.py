@@ -67,7 +67,7 @@ def read_split_slices(
         )
         .view(1, desired_size[0], desired_size[1], -1)
         .permute(3, 0, 1, 2)
-        for slice_idx in tqdm(range(1, 65))
+        for slice_idx in tqdm(range(65))
     ]
 
 
