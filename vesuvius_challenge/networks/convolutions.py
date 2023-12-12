@@ -20,7 +20,7 @@ class Conv3dBlock(nn.Sequential):
                 padding_mode="replicate",
             ),
             nn.Mish(),
-            nn.GroupNorm(num_groups, out_channels),
+            nn.BatchNorm3d(out_channels),
         )
 
 
@@ -42,7 +42,7 @@ class DownConv3dBlock(nn.Sequential):
                 padding_mode="replicate",
             ),
             nn.Mish(),
-            nn.GroupNorm(num_groups, out_channels),
+            nn.BatchNorm3d(out_channels),
         )
 
 
@@ -63,7 +63,7 @@ class DownConv2dBlock(nn.Sequential):
                 padding_mode="replicate",
             ),
             nn.Mish(),
-            nn.GroupNorm(num_groups, out_channels),
+            nn.BatchNorm2d(out_channels),
         )
 
 
@@ -84,7 +84,7 @@ class Conv2dBlock(nn.Sequential):
                 padding_mode="replicate",
             ),
             nn.Mish(),
-            nn.GroupNorm(num_groups, out_channels),
+            nn.BatchNorm2d(out_channels),
         )
 
 
@@ -105,7 +105,7 @@ class UpConv2dBlock(nn.Sequential):
                 padding_mode="zeros",
             ),
             nn.Mish(),
-            nn.GroupNorm(num_groups, out_channels),
+            nn.BatchNorm2d(out_channels),
         )
 
 

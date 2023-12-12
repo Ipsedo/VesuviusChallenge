@@ -36,7 +36,6 @@ class TrfAutoEncoder(nn.Module):
         self.__input_encoder = nn.ModuleList(
             nn.Sequential(
                 Conv3dBlock(c_i, c_o, num_groups),
-                nn.Dropout(0.1),
                 DownConv3dBlock(c_o, c_o, num_groups),
             )
             for c_i, c_o in channels
@@ -72,7 +71,6 @@ class TrfAutoEncoder(nn.Module):
         self.__decoder = nn.ModuleList(
             nn.Sequential(
                 Conv2dBlock(c_i, c_o, num_groups),
-                nn.Dropout(0.1),
                 UpConv2dBlock(c_o, c_o, num_groups),
             )
             for c_i, c_o in decoder_channels
