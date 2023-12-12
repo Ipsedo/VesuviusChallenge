@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from statistics import mean
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 import numpy as np
 import torch as th
@@ -10,7 +10,6 @@ from .agg import Agg
 from .convolutions import (
     Conv2dBlock,
     Conv3dBlock,
-    DownConv2dBlock,
     DownConv3dBlock,
     OutputConv2d,
     UpConv2dBlock,
@@ -37,19 +36,10 @@ class TrfAutoEncoder(nn.Module):
         self.__input_encoder = nn.ModuleList(
             nn.Sequential(
                 Conv3dBlock(c_i, c_o, num_groups),
+                nn.Dropout(0.1),
                 DownConv3dBlock(c_o, c_o, num_groups),
             )
             for c_i, c_o in channels
-        )
-
-        self.__target_encoder = nn.Sequential(
-            *[
-                nn.Sequential(
-                    Conv2dBlock(c_i, c_o, num_groups),
-                    DownConv2dBlock(c_o, c_o, num_groups),
-                )
-                for c_i, c_o in channels
-            ]
         )
 
         self.__flat = Agg("max", dim=-1)
@@ -82,6 +72,7 @@ class TrfAutoEncoder(nn.Module):
         self.__decoder = nn.ModuleList(
             nn.Sequential(
                 Conv2dBlock(c_i, c_o, num_groups),
+                nn.Dropout(0.1),
                 UpConv2dBlock(c_o, c_o, num_groups),
             )
             for c_i, c_o in decoder_channels
@@ -95,9 +86,7 @@ class TrfAutoEncoder(nn.Module):
             nn.Sigmoid(),
         )
 
-    def forward(
-        self, x: th.Tensor, tgt: Optional[th.Tensor] = None
-    ) -> th.Tensor:
+    def forward(self, x: th.Tensor) -> th.Tensor:
         assert len(x.size()) == 5
 
         out = x
@@ -108,16 +97,7 @@ class TrfAutoEncoder(nn.Module):
 
         out = self.__flat(out)
 
-        """if tgt is not None:
-            assert len(tgt.size()) == len(x.size()) - 1
-            assert all(
-                x.size(i) == tgt.size(i) for i in range(len(x.size()) - 1)
-            )
-
-            encoded_tgt = self.__target_encoder(tgt)
-            out = self.__trf(out, encoded_tgt)
-        else:
-            out = self.__trf(out)"""
+        out = self.__trf(out)
 
         for dec, bypass, to_dec in zip(
             self.__decoder, reversed(bypasses), self.__to_decoder
@@ -129,6 +109,17 @@ class TrfAutoEncoder(nn.Module):
         out = self.__output(out)
 
         return out
+
+    def generate(self, x: th.Tensor) -> th.Tensor:
+        b, _, w, h, _ = x.size()
+
+        tgt = th.zeros((b, 1, w, h))
+
+        for i in range(self.__trf.window_length):
+            tgt = th.where(self(x, tgt, i) > 0.5, 1.0, 0.0)
+            print(tgt.size())
+
+        return tgt
 
     def count_parameters(self) -> int:
         return int(

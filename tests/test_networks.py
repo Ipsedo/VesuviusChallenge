@@ -34,23 +34,13 @@ def test_windowed_transformer(
     )
 
     x = th.rand(batch_size, channels, *sizes)
-    y = th.rand(batch_size, channels, *sizes)
 
-    out = trf(x, y)
+    out = trf(x)
 
     assert len(out.size()) == len(x.size())
     assert out.size(0) == batch_size
     assert out.size(1) == channels
     assert all(s == s_expected for s, s_expected in zip(out.size()[2:], sizes))
-
-    out_gen = trf(x)
-
-    assert len(out_gen.size()) == len(x.size())
-    assert out_gen.size(0) == batch_size
-    assert out_gen.size(1) == channels
-    assert all(
-        s == s_expected for s, s_expected in zip(out_gen.size()[2:], sizes)
-    )
 
 
 @pytest.mark.parametrize("batch_size", [1, 2])
@@ -68,20 +58,11 @@ def test_model(batch_size: int, sizes: List[int]) -> None:
     )
 
     x = th.rand(batch_size, 1, *sizes)
-    tgt = th.rand(batch_size, 1, *sizes[:-1])
 
-    out = trf_ae(x, tgt)
+    out = trf_ae(x)
 
     assert len(out.size()) == 4
     assert out.size(0) == batch_size
     assert out.size(1) == 1
     assert out.size(2) == sizes[0]
     assert out.size(3) == sizes[1]
-
-    out_gen = trf_ae(x)
-
-    assert len(out_gen.size()) == 4
-    assert out_gen.size(0) == batch_size
-    assert out_gen.size(1) == 1
-    assert out_gen.size(2) == sizes[0]
-    assert out_gen.size(3) == sizes[1]

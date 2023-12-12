@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from math import log
-from typing import Optional
 
 import torch as th
 from torch import nn
@@ -33,7 +32,8 @@ class WindowedTransformer(nn.Module):
             num_decoder_layers=decoder_layers,
             dim_feedforward=hidden,
             batch_first=True,
-            activation="relu",
+            activation="gelu",
+            dropout=0.1,
         )
 
         position = th.arange(kernel_size**self.__nb_dim).unsqueeze(1)
@@ -68,25 +68,9 @@ class WindowedTransformer(nn.Module):
 
         return out
 
-    def __generate(self, input_trf: th.Tensor) -> th.Tensor:
-        input_trf = input_trf + self._pe
-
-        # start token
-        target = self.__start_pixel.repeat(input_trf.size(0), 1, 1)
-
-        for _ in range(self.__kernel_size**self.__nb_dim):
-            out = self.__trf(
-                input_trf, target + self._pe[:, : target.size(1), :]
-            )
-            target = th.cat([target, out[:, -1, None, :]], dim=1)
-
-        # remove start token
-        return target[:, 1:, :]
-
     def forward(
         self,
         input_encoded: th.Tensor,
-        target_encoded: Optional[th.Tensor] = None,
     ) -> th.Tensor:
         assert len(input_encoded.size()) >= 3
 
@@ -95,37 +79,18 @@ class WindowedTransformer(nn.Module):
 
         input_trf = self.__linear_path_unfold(input_encoded) + self._pe
 
-        if target_encoded is not None:
-            # training
-            assert len(target_encoded.size()) == len(input_encoded.size())
-            assert all(
-                input_encoded.size(i) == target_encoded.size(i)
-                for i in range(len(input_encoded.size()))
+        tgt = self.__start_pixel.repeat(input_trf.size(0), 1, 1)
+
+        for _ in range(self.__kernel_size**self.__nb_dim):
+            tgt_pred = self.__trf(
+                input_trf, tgt + self._pe[:, : tgt.size(1), :]
             )
+            tgt = th.cat([tgt, tgt_pred[:, -1, None, :]], dim=1)
 
-            target_trf = th.cat(
-                [
-                    self.__start_pixel.repeat(input_trf.size(0), 1, 1),
-                    self.__linear_path_unfold(target_encoded)[:, :-1, :],
-                ],
-                dim=1,
-            )
+        tgt = tgt[:, 1:, :]
 
-            target_trf = target_trf + self._pe
-
-            tgt_mask = self.__trf.generate_square_subsequent_mask(
-                target_trf.size(1), device=input_trf.device
-            )
-
-            out: th.Tensor = self.__trf(
-                input_trf, target_trf, tgt_mask=tgt_mask
-            )
-        else:
-            # auto-regressive generation
-            out = self.__generate(input_trf)
-
-        out = (
-            out.view(b, -1, self.__kernel_size ** len(sizes), self.__channels)
+        out: th.Tensor = (
+            tgt.view(b, -1, self.__kernel_size ** len(sizes), self.__channels)
             # batch, channels, kernel, patchs
             .permute(0, 3, 2, 1)
             .contiguous()

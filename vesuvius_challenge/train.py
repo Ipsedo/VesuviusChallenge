@@ -69,7 +69,7 @@ def train(model_options: ModelOptions, train_options: TrainOptions) -> None:
                 x = x.cuda()
                 y = y.cuda()
 
-            out = model(x, y)
+            out = model(x)
 
             loss = binary_cross_entropy(out, y, reduction="mean")
 
