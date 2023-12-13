@@ -183,8 +183,12 @@ def process_data_stride(
         tqdm_bar = tqdm(
             [
                 (k_w, k_h)
-                for k_w in range(0, label_t.size(1), stride[0])
-                for k_h in range(0, label_t.size(2), stride[1])
+                for k_w in range(
+                    0, label_t.size(1) - desired_size[0], stride[0]
+                )
+                for k_h in range(
+                    0, label_t.size(2) - desired_size[1], stride[1]
+                )
             ]
         )
         for k_w, k_h in tqdm_bar:
