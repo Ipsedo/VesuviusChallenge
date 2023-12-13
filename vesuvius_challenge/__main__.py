@@ -3,7 +3,7 @@ import argparse
 import re
 from typing import List, Tuple
 
-from .data import process_data
+from .data import process_data_stride
 from .options import ModelOptions, TrainOptions
 from .train import train
 
@@ -40,9 +40,10 @@ def main() -> None:
 
     data_parser.add_argument("extracted_zip_folder", type=str)
     data_parser.add_argument("output_folder", type=str)
-    data_parser.add_argument("--width", type=int, default=128)
-    data_parser.add_argument("--height", type=int, default=128)
+    data_parser.add_argument("--width", type=int, default=256)
+    data_parser.add_argument("--height", type=int, default=256)
     data_parser.add_argument("--images", type=int, nargs="+", default=[1, 2])
+    data_parser.add_argument("--stride", type=int, nargs=2, default=[64, 64])
 
     ############
     # Modeling #
@@ -119,12 +120,12 @@ def main() -> None:
         else:
             model_parser.error(f'Unrecognized model_model "{args.model_mode}"')
     elif args.mode == "data":
-        process_data(
+        process_data_stride(
             args.extracted_zip_folder,
             args.output_folder,
             (args.width, args.height),
+            args.stride,
             args.images,
-            False,
         )
     else:
         parser.error(f'Unrecognized mode "{args.mode}"')
