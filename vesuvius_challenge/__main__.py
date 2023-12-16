@@ -4,7 +4,8 @@ import re
 from typing import List, Tuple
 
 from .data import process_data_stride
-from .options import ModelOptions, TrainOptions
+from .infer import infer
+from .options import InferOptions, ModelOptions, TrainOptions
 from .train import train
 
 
@@ -84,6 +85,11 @@ def main() -> None:
     # Infer
 
     infer_parser = model_mode_parser.add_parser("infer")
+    infer_parser.add_argument("model_state_dict", type=str)
+    infer_parser.add_argument("dataset_path", type=str)
+    infer_parser.add_argument("output_path", type=str)
+    infer_parser.add_argument("--batch-size", type=int, default=16)
+    infer_parser.add_argument("--cuda", action="store_true")
 
     args = parser.parse_args()
 
@@ -116,7 +122,15 @@ def main() -> None:
             train(model_options, train_options)
 
         elif args.model_mode == "infer":
-            print(infer_parser)
+            infer_options = InferOptions(
+                model_state_dict=args.model_state_dict,
+                dataset_path=args.dataset_path,
+                output_path=args.output_path,
+                batch_size=args.batch_size,
+                cuda=args.cuda,
+            )
+
+            infer(model_options, infer_options)
         else:
             model_parser.error(f'Unrecognized model_model "{args.model_mode}"')
     elif args.mode == "data":

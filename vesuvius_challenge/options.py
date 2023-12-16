@@ -40,4 +40,7 @@ class TrainOptions(NamedTuple):
 
 class InferOptions(NamedTuple):
     model_state_dict: str
+    dataset_path: str
     output_path: str
+    batch_size: int
+    cuda: bool
