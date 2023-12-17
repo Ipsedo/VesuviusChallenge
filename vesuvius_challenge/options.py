@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from typing import List, NamedTuple, Tuple
 
-from .networks import TrfAutoEncoder
+from .networks import WindowedTransformer
 
 
 class ModelOptions(NamedTuple):
@@ -14,8 +14,8 @@ class ModelOptions(NamedTuple):
     hidden: int
     num_heads: int
 
-    def new_model(self) -> TrfAutoEncoder:
-        return TrfAutoEncoder(
+    def new_model(self) -> WindowedTransformer:
+        """return TrfAutoEncoder(
             self.channels,
             self.slices,
             self.num_groups,
@@ -24,6 +24,16 @@ class ModelOptions(NamedTuple):
             self.trf_layers,
             self.hidden,
             self.num_heads,
+        )"""
+        return WindowedTransformer(
+            self.slices,
+            2,
+            self.hidden,
+            self.trf_kernel_size,
+            self.trf_padding,
+            self.num_heads,
+            self.trf_layers,
+            self.trf_layers,
         )
 
 

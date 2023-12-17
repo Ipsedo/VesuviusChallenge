@@ -34,6 +34,14 @@ def test_windowed_transformer(
     )
 
     x = th.rand(batch_size, channels, *sizes)
+    tgt = th.randint(1, 3, (batch_size, *sizes))
+
+    out = trf(x, tgt)
+
+    assert len(out.size()) == len(x.size())
+    assert out.size(0) == batch_size
+    assert out.size(1) == channels
+    assert all(s == s_expected for s, s_expected in zip(out.size()[2:], sizes))
 
     out = trf(x)
 

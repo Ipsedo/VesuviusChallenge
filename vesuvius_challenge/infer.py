@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import torch as th
-from torch.nn.functional import binary_cross_entropy
+from torch.nn.functional import cross_entropy
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
 from tqdm import tqdm
@@ -34,15 +34,18 @@ def infer(model_options: ModelOptions, infer_options: InferOptions) -> None:
 
     with th.no_grad():
         idx = 0
-        for img, lbl in tqdm(data_loader):
+        tqdm_bar = tqdm(data_loader)
+        for img, lbl in tqdm_bar:
             if infer_options.cuda:
                 img = img.cuda()
                 lbl = lbl.cuda()
 
             out = model(img)
 
-            loss += binary_cross_entropy(out, lbl, reduction="mean").item()
+            loss += cross_entropy(out, lbl, reduction="mean").item()
             idx += 1
+
+            tqdm_bar.set_description(f"cross_entropy : {loss / idx:.6f}")
 
         loss /= idx
 
