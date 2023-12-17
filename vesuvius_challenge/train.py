@@ -99,7 +99,7 @@ def train(model_options: ModelOptions, train_options: TrainOptions) -> None:
                 )
 
                 th.save(
-                    optim.state_dict,
+                    optim.state_dict(),
                     join(train_options.output_path, f"optim_{save_idx}.pt"),
                 )
 

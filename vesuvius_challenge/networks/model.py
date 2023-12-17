@@ -108,17 +108,6 @@ class TrfAutoEncoder(nn.Module):
 
         return out
 
-    def generate(self, x: th.Tensor) -> th.Tensor:
-        b, _, w, h, _ = x.size()
-
-        tgt = th.zeros((b, 1, w, h))
-
-        for i in range(self.__trf.window_length):
-            tgt = th.where(self(x, tgt, i) > 0.5, 1.0, 0.0)
-            print(tgt.size())
-
-        return tgt
-
     def count_parameters(self) -> int:
         return int(
             sum(
