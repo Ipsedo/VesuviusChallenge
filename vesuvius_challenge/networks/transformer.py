@@ -158,7 +158,8 @@ class WindowedTransformer(nn.Module):
             tgt = self.__linear_path_unfold(tgt)
             tgt = th.cat([start_token, tgt[:, 1:, :]], dim=1)
 
-            out = self.__trf(input_trf, self.__pe(tgt))
+            tgt_mask = self.__trf.generate_square_subsequent_mask(tgt.size(1), device=tgt.device)
+            out = self.__trf(input_trf, self.__pe(tgt), tgt_mask=tgt_mask)
 
         out = (
             out.view(b, -1, self.__kernel_size ** len(sizes), self.__channels)
