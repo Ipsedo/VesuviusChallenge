@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from math import log
-from typing import Tuple
+from statistics import mean
+from typing import Optional, Tuple
 
+import numpy as np
 import torch as th
 from torch import nn
 from unfoldNd import foldNd, unfoldNd
@@ -96,7 +98,11 @@ class WindowedTransformer(nn.Module):
 
         self.__pe = Positional2dEncoding(channels, (kernel_size, kernel_size))
 
-        self.__start_pixel = nn.Parameter(th.randn((1, 1, channels)))
+        self.__emb = nn.Embedding(3, channels)
+        self.__to_emb = nn.Sequential(
+            nn.Linear(channels, 3),
+            nn.Softmax(dim=-1),
+        )
 
     def __linear_path_unfold(self, t: th.Tensor) -> th.Tensor:
         b = t.size(0)
@@ -121,25 +127,41 @@ class WindowedTransformer(nn.Module):
 
     def forward(
         self,
-        input_encoded: th.Tensor,
+        x: th.Tensor,
+        tgt: Optional[th.Tensor] = None,
     ) -> th.Tensor:
-        assert len(input_encoded.size()) >= 3
+        assert len(x.size()) >= 3
 
-        b = input_encoded.size(0)
-        sizes = input_encoded.size()[2:]
+        b = x.size(0)
+        sizes = x.size()[2:]
 
-        input_trf = self.__pe(self.__linear_path_unfold(input_encoded))
+        input_trf = self.__pe(self.__linear_path_unfold(x))
 
-        tgt = self.__start_pixel.repeat(input_trf.size(0), 1, 1)
+        start_token = self.__emb(
+            th.zeros(
+                (input_trf.size(0), 1), dtype=th.long, device=input_trf.device
+            )
+        )
 
-        for _ in range(self.__kernel_size**self.__nb_dim):
-            tgt_next = self.__trf(input_trf, self.__pe(tgt))
-            tgt = th.cat([tgt, tgt_next[:, -1, None, :]], dim=1)
+        if tgt is None:
+            tgt = start_token
+            for _ in range(self.__kernel_size**self.__nb_dim):
+                tgt_next = self.__trf(input_trf, self.__pe(tgt))
+                tgt_next = self.__to_emb(tgt_next)
+                tgt_next = th.argmax(tgt_next, dim=-1)
+                tgt_next = self.__emb(tgt_next)
+                tgt = th.cat([tgt, tgt_next[:, -1, None, :]], dim=1)
 
-        tgt = tgt[:, 1:, :]
+            out = tgt[:, 1:, :]
+        else:
+            tgt = self.__emb(tgt).permute(0, 3, 1, 2)
+            tgt = self.__linear_path_unfold(tgt)
+            tgt = th.cat([start_token, tgt[:, 1:, :]], dim=1)
 
-        out: th.Tensor = (
-            tgt.view(b, -1, self.__kernel_size ** len(sizes), self.__channels)
+            out = self.__trf(input_trf, self.__pe(tgt))
+
+        out = (
+            out.view(b, -1, self.__kernel_size ** len(sizes), self.__channels)
             # batch, channels, kernel, patchs
             .permute(0, 3, 2, 1)
             .contiguous()
@@ -156,3 +178,19 @@ class WindowedTransformer(nn.Module):
         )
 
         return out
+
+    def count_parameters(self) -> int:
+        return int(
+            sum(
+                np.prod(p.size()) for p in self.parameters() if p.requires_grad
+            )
+        )
+
+    def grad_norm(self) -> float:
+        return float(
+            mean(
+                p.grad.norm().item()
+                for p in self.parameters()
+                if p.grad is not None
+            )
+        )
