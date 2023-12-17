@@ -53,6 +53,8 @@ class VesuviusDataset(Dataset):
     def __getitem__(self, idx: int) -> Tuple[th.Tensor, th.Tensor]:
         img = self.__img_tr(th.load(self.__img_path[idx]))
         lbl = self.__lbl_tr(th.load(self.__lbl_path[idx]))
+        img = img.squeeze(0).permute(2, 0, 1)[1:, :, :]
+        lbl = th.where(lbl.squeeze(0) == 0, th.tensor(1), th.tensor(2))
         return img, lbl
 
     def __len__(self) -> int:
