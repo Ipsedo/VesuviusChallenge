@@ -58,7 +58,7 @@ def train(model_options: ModelOptions, train_options: TrainOptions) -> None:
 
     iter_idx = 0
     save_idx = 0
-    bce_metrics = [1.0] * train_options.metric_length
+    loss_metrics = [1.0] * train_options.metric_length
 
     for e in range(train_options.nb_epoch):
 
@@ -77,15 +77,15 @@ def train(model_options: ModelOptions, train_options: TrainOptions) -> None:
             loss.backward()
             optim.step()
 
-            del bce_metrics[0]
-            bce_metrics.append(loss.item())
+            del loss_metrics[0]
+            loss_metrics.append(loss.item())
 
             tqdm_bar.set_description(
                 f"Epoch {e:03} "
                 f"- save {save_idx - 1:03} "
                 f"[{iter_idx % train_options.save_every} "
                 f"/ {train_options.save_every}]: "
-                f"bce = {mean(bce_metrics):.5f}, "
+                f"mse = {mean(loss_metrics):.5f}, "
                 f"grad_norm = {model.grad_norm():.5f}"
             )
 
