@@ -4,7 +4,7 @@ from os.path import exists, isdir, join
 from statistics import mean
 
 import torch as th
-from torch.nn.functional import binary_cross_entropy
+from torch.nn.functional import mse_loss
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
@@ -71,7 +71,7 @@ def train(model_options: ModelOptions, train_options: TrainOptions) -> None:
 
             out = model(x)
 
-            loss = binary_cross_entropy(out, y, reduction="mean")
+            loss = mse_loss(out, y, reduction="mean")
 
             optim.zero_grad()
             loss.backward()

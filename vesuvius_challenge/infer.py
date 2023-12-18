@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import torch as th
-from torch.nn.functional import binary_cross_entropy
+from torch.nn.functional import mse_loss
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
 from tqdm import tqdm
@@ -41,7 +41,7 @@ def infer(model_options: ModelOptions, infer_options: InferOptions) -> None:
 
             out = model(img)
 
-            loss += binary_cross_entropy(out, lbl, reduction="mean").item()
+            loss += mse_loss(out, lbl, reduction="mean").item()
             idx += 1
 
         loss /= idx
