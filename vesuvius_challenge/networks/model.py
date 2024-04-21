@@ -14,6 +14,7 @@ from .convolutions import (
     OutputConv2d,
     UpConv2dBlock,
 )
+from .init import init_module
 from .transformer import WindowedTransformer
 
 
@@ -22,7 +23,6 @@ class TrfAutoEncoder(nn.Module):
         self,
         channels: List[Tuple[int, int]],
         slices: int,
-        num_groups: int,
         trf_kernel_size: int,
         trf_padding: int,
         trf_layers: int,
@@ -35,8 +35,8 @@ class TrfAutoEncoder(nn.Module):
 
         self.__input_encoder = nn.ModuleList(
             nn.Sequential(
-                Conv3dBlock(c_i, c_o, num_groups),
-                DownConv3dBlock(c_o, c_o, num_groups),
+                Conv3dBlock(c_i, c_o),
+                DownConv3dBlock(c_o, c_o),
             )
             for c_i, c_o in channels
         )
@@ -68,8 +68,8 @@ class TrfAutoEncoder(nn.Module):
 
         self.__decoder = nn.ModuleList(
             nn.Sequential(
-                Conv2dBlock(c_i, c_o, num_groups),
-                UpConv2dBlock(c_o, c_o, num_groups),
+                Conv2dBlock(c_i, c_o),
+                UpConv2dBlock(c_o, c_o),
             )
             for c_i, c_o in decoder_channels
         )
@@ -77,10 +77,11 @@ class TrfAutoEncoder(nn.Module):
         c_i = decoder_channels[-1][0]
         c_o = channels[0][0]
         self.__output = nn.Sequential(
-            Conv2dBlock(c_i, c_i, num_groups),
+            Conv2dBlock(c_i, c_i),
             OutputConv2d(c_i, c_o),
-            nn.Sigmoid(),
         )
+
+        self.apply(init_module)
 
     def forward(self, x: th.Tensor) -> th.Tensor:
         assert len(x.size()) == 5

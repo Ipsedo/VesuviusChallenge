@@ -47,7 +47,6 @@ def test_model(batch_size: int, sizes: List[int]) -> None:
     trf_ae = TrfAutoEncoder(
         [(1, 4), (4, 8)],
         sizes[-1],
-        2,
         3,
         1,
         2,

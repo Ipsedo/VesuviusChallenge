@@ -8,7 +8,6 @@ class Conv3dBlock(nn.Sequential):
         self,
         in_channels: int,
         out_channels: int,
-        num_groups: int,
     ) -> None:
         super().__init__(
             nn.Conv3d(
@@ -19,7 +18,7 @@ class Conv3dBlock(nn.Sequential):
                 padding=(1, 1, 1),
             ),
             nn.Mish(),
-            nn.GroupNorm(num_groups, out_channels),
+            nn.BatchNorm3d(out_channels),
         )
 
 
@@ -28,7 +27,6 @@ class DownConv3dBlock(nn.Sequential):
         self,
         in_channels: int,
         out_channels: int,
-        num_groups: int,
     ) -> None:
 
         super().__init__(
@@ -40,27 +38,7 @@ class DownConv3dBlock(nn.Sequential):
                 padding=(1, 1, 1),
             ),
             nn.Mish(),
-            nn.GroupNorm(num_groups, out_channels),
-        )
-
-
-class DownConv2dBlock(nn.Sequential):
-    def __init__(
-        self,
-        in_channels: int,
-        out_channels: int,
-        num_groups: int,
-    ) -> None:
-        super().__init__(
-            nn.Conv2d(
-                in_channels,
-                out_channels,
-                (4, 4),
-                stride=(2, 2),
-                padding=(1, 1),
-            ),
-            nn.Mish(),
-            nn.GroupNorm(num_groups, out_channels),
+            nn.BatchNorm3d(out_channels),
         )
 
 
@@ -69,7 +47,6 @@ class Conv2dBlock(nn.Sequential):
         self,
         in_channels: int,
         out_channels: int,
-        num_groups: int,
     ) -> None:
         super().__init__(
             nn.Conv2d(
@@ -80,7 +57,7 @@ class Conv2dBlock(nn.Sequential):
                 (1, 1),
             ),
             nn.Mish(),
-            nn.GroupNorm(num_groups, out_channels),
+            nn.BatchNorm2d(out_channels),
         )
 
 
@@ -89,7 +66,6 @@ class UpConv2dBlock(nn.Sequential):
         self,
         in_channels: int,
         out_channels: int,
-        num_groups: int,
     ) -> None:
         super().__init__(
             nn.ConvTranspose2d(
@@ -100,7 +76,7 @@ class UpConv2dBlock(nn.Sequential):
                 (1, 1),
             ),
             nn.Mish(),
-            nn.GroupNorm(num_groups, out_channels),
+            nn.BatchNorm2d(out_channels),
         )
 
 
@@ -110,8 +86,9 @@ class OutputConv2d(nn.Sequential):
             nn.Conv2d(
                 in_channels,
                 out_channels,
-                1,
-                1,
-                0,
+                (3, 3),
+                (1, 1),
+                (1, 1),
             ),
+            nn.Sigmoid(),
         )

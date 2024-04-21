@@ -58,7 +58,6 @@ def main() -> None:
         default=[(1, 16), (16, 32), (32, 64), (64, 128)],
     )
     model_parser.add_argument("--slices", type=int, default=65)
-    model_parser.add_argument("--num-groups", type=int, default=8)
     model_parser.add_argument("--trf-kernel-size", type=int, default=3)
     model_parser.add_argument("--trf-padding", type=int, default=1)
     model_parser.add_argument("--trf-layers", type=int, default=6)
@@ -98,7 +97,6 @@ def main() -> None:
         model_options = ModelOptions(
             channels=args.channels,
             slices=args.slices,
-            num_groups=args.num_groups,
             trf_kernel_size=args.trf_kernel_size,
             trf_padding=args.trf_padding,
             trf_layers=args.trf_layers,
