@@ -24,12 +24,10 @@ def test_windowed_transformer(
 ) -> None:
     trf = WindowedTransformer(
         channels,
-        len(sizes),
         hidden,
         kernel_size,
         kernel_size // 2,
         num_heads,
-        3,
         3,
     )
 

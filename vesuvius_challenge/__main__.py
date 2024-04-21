@@ -55,14 +55,14 @@ def main() -> None:
     model_parser.add_argument(
         "--channels",
         type=_channels,
-        default=[(1, 4), (4, 8), (8, 16), (16, 32), (32, 64)],
+        default=[(1, 16), (16, 32), (32, 64), (64, 128)],
     )
     model_parser.add_argument("--slices", type=int, default=65)
-    model_parser.add_argument("--num-groups", type=int, default=4)
+    model_parser.add_argument("--num-groups", type=int, default=8)
     model_parser.add_argument("--trf-kernel-size", type=int, default=3)
     model_parser.add_argument("--trf-padding", type=int, default=1)
-    model_parser.add_argument("--trf-layers", type=int, default=3)
-    model_parser.add_argument("--trf-hidden", type=int, default=128)
+    model_parser.add_argument("--trf-layers", type=int, default=6)
+    model_parser.add_argument("--trf-hidden", type=int, default=256)
     model_parser.add_argument("--trf-num-heads", type=int, default=4)
 
     model_mode_parser = model_parser.add_subparsers(
@@ -77,7 +77,7 @@ def main() -> None:
     train_parser.add_argument("output_path", type=str)
     train_parser.add_argument("--nb-epoch", type=int, default=100)
     train_parser.add_argument("--learning-rate", type=float, default=1e-4)
-    train_parser.add_argument("--batch-size", type=int, default=4)
+    train_parser.add_argument("--batch-size", type=int, default=8)
     train_parser.add_argument("--save-every", type=int, default=1024)
     train_parser.add_argument("--metric-length", type=int, default=64)
     train_parser.add_argument("--cuda", action="store_true")

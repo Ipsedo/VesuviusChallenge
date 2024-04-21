@@ -41,16 +41,14 @@ class TrfAutoEncoder(nn.Module):
             for c_i, c_o in channels
         )
 
-        self.__flat = Agg("max", dim=-1)
+        self.__flat = Agg("mean", dim=-1)
 
         self.__trf = WindowedTransformer(
             channels[-1][1],
-            2,
             hidden,
             trf_kernel_size,
             trf_padding,
             num_heads,
-            trf_layers,
             trf_layers,
         )
 
